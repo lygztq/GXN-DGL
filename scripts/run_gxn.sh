@@ -77,7 +77,7 @@ python main.py \
       --final_dense_hidden_dim $hidden_final \
       --readout_nodes $sortpooling_k \
       --pool_ratios $k1 $k2 \
-      --batch_size $bsbatch_sizeize \
+      --batch_size $batch_size \
       --device $device \
       --dropout $dropout \
       --cross_weight $cross_weight\
