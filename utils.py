@@ -40,6 +40,7 @@ def degree_as_feature(dataset):
     dataset.save()
     return dataset
 
+
 def get_stats(array, conf_interval=False, name=None, stdout=False, logout=False):
     """Compute mean and standard deviation from an numerical array
     
@@ -150,6 +151,8 @@ def parse_args():
     if not torch.cuda.is_available():
         logging.warning("GPU is not available, using CPU for training")
         args.device = "cpu"
+    else:
+        logging.warning("Device: {}".format(args.device))
 
     # random seed
     if args.seed >= 0:

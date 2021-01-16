@@ -132,6 +132,8 @@ class GraphCrossModule(torch.nn.Module):
         feat_agg = feat_scale1 + self.fuse_weight * feat_s2_out + self.fuse_weight * feat_down_s1
         feat_agg = torch.cat((feat_agg, feat_origin), dim=1)
         feat_agg = self.end_gcn(graph_scale1, feat_agg)
+        # del graph_scale2
+        # del graph_scale3
 
         return feat_agg, logit_s1, logit_s2
 
