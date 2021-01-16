@@ -215,8 +215,8 @@ class GraphClassifier(torch.nn.Module):
                                  conv1d_kws=args.conv1d_kws,
                                  cross_weight=args.cross_weight,
                                  fuse_weight=args.fuse_weight)
-        self.lin1 = torch.nn.Linear(args.embed_dim, args.hidden_dim)
-        self.lin2 = torch.nn.Linear(args.hidden_dim, args.out_dim)
+        self.lin1 = torch.nn.Linear(args.embed_dim, args.final_dense_hidden_dim)
+        self.lin2 = torch.nn.Linear(args.final_dense_hidden_dim, args.out_dim)
         self.dropout = args.dropout
 
     def forward(self, graph:DGLGraph, node_feat:Tensor, edge_feat:Optional[Tensor]=None):

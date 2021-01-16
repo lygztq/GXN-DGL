@@ -83,12 +83,69 @@ def get_stats(array, conf_interval=False, name=None, stdout=False, logout=False)
     return center, err_bound
 
 
+def get_batch_id(num_nodes:torch.Tensor):
+    """Convert the num_nodes array obtained from batch graph to batch_id array
+    for each node.
+    Args:
+        num_nodes (torch.Tensor): The tensor whose element is the number of nodes
+            in each graph in the batch graph.
+    """
+    batch_size = num_nodes.size(0)
+    batch_ids = []
+    for i in range(batch_size):
+        item = torch.full((num_nodes[i],), i, dtype=torch.long, device=num_nodes.device)
+        batch_ids.append(item)
+    return torch.cat(batch_ids)
+
+
+def topk(x:torch.Tensor, ratio:float, batch_id:torch.Tensor, num_nodes:torch.Tensor):
+    """The top-k pooling method. Given a graph batch, this method will pool out some
+    nodes from input node feature tensor for each graph according to the given ratio.
+    Args:
+        x (torch.Tensor): The input node feature batch-tensor to be pooled.
+        ratio (float): the pool ratio. For example if :obj:`ratio=0.5` then half of the input
+            tensor will be pooled out.
+        batch_id (torch.Tensor): The batch_id of each element in the input tensor.
+        num_nodes (torch.Tensor): The number of nodes of each graph in batch.
+    
+    Returns:
+        perm (torch.Tensor): The index in batch to be kept.
+        k (torch.Tensor): The remaining number of nodes for each graph.
+    """
+    batch_size, max_num_nodes = num_nodes.size(0), num_nodes.max().item()
+    
+    cum_num_nodes = torch.cat(
+        [num_nodes.new_zeros(1),
+         num_nodes.cumsum(dim=0)[:-1]], dim=0)
+    
+    index = torch.arange(batch_id.size(0), dtype=torch.long, device=x.device)
+    index = (index - cum_num_nodes[batch_id]) + (batch_id * max_num_nodes)
+
+    dense_x = x.new_full((batch_size * max_num_nodes, ), torch.finfo(x.dtype).min)
+    dense_x[index] = x
+    dense_x = dense_x.view(batch_size, max_num_nodes)
+
+    _, perm = dense_x.sort(dim=-1, descending=True)
+    perm = perm + cum_num_nodes.view(-1, 1)
+    perm = perm.view(-1)
+
+    k = (ratio * num_nodes.to(torch.float)).ceil().to(torch.long)
+    mask = [
+        torch.arange(k[i], dtype=torch.long, device=x.device) + 
+        i * max_num_nodes for i in range(batch_size)]
+
+    mask = torch.cat(mask, dim=0)
+    perm = perm[mask]
+
+    return perm, k
+
+
 def parse_args():
     parser = argparse.ArgumentParser("Graph Cross Network")
     parser.add_argument("--pool_ratios", nargs="+", type=float,
                         help="The pooling ratios used in graph cross layers")
     parser.add_argument("--hidden_dim", type=int, default=96,
-                        help="The number of hidden channels")
+                        help="The number of hidden channels in GXN")
     parser.add_argument("--cross_weight", type=float, default=1.,
                         help="Weight parameter used in graph cross layer")
     parser.add_argument("--fuse_weight", type=float, default=1., 
@@ -105,6 +162,8 @@ def parse_args():
                         help="Dropout rate")
     parser.add_argument("--embed_dim", type=int, default=1024, 
                         help="Number of channels of graph embedding")
+    parser.add_argument("--final_dense_hidden_dim", type=int, default=128,
+                        help="The number of hidden channels in final dense layers")
 
     parser.add_argument("--batch_size", type=int, default=64, 
                         help="Batch size")
@@ -134,7 +193,7 @@ def parse_args():
 
     # default value for list hyper-parameters
     if not args.pool_ratios or len(args.pool_ratios) < 2:
-        args.pool_ratios = [0.9, 0.7]
+        args.pool_ratios = [0.8, 0.7]
         logging.warning("No valid pool_ratios is given, "
                         "using default value '{}'".format(args.pool_ratios))
     if not args.conv1d_dims or len(args.conv1d_dims) < 2:
