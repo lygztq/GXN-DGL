@@ -1,0 +1,13 @@
+# editor/IDE
+.vscode/
+
+# test
+test.py
+test_utils.py
+
+# python cache
+__pycache__/
+
+# dataset and output
+datasets/
+output/
