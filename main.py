@@ -156,5 +156,5 @@ if __name__ == "__main__":
                 "result": "{:.4f}(+-{:.4f})".format(mean, err_bd),
                 "train_time": "{:.4f}".format(sum(train_times) / len(train_times))}
 
-    with open(os.path.join(args.output_path, "train.log"), "w") as f:
+    with open(os.path.join(args.output_path, "{}.log".format(args.dataset)), "w") as f:
         json.dump(out_dict, f, sort_keys=True, indent=4)
