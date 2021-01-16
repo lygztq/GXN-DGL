@@ -2,13 +2,43 @@ import argparse
 import logging
 import math
 import os
+import sys
 import random
 
 import numpy as np
 import torch
 import torch.cuda
 from scipy.stats import t
+import dgl
 
+
+def degree_as_feature(dataset):
+    """
+    Use node degree (in one-hot format) as node feature
+    """
+    # first check if already have such feature
+    feat_name = "degree"
+    g = dataset.graph_lists[0]
+    if feat_name in g.ndata:
+        return dataset
+
+    logging.warning("Adding node degree into node features...")
+    min_degree = sys.maxsize
+    max_degree = 0
+    for i in range(len(dataset)):
+        degrees = dataset.graph_lists[i].in_degrees()
+        min_degree = min(min_degree, degrees.min().item())
+        max_degree = max(max_degree, degrees.max().item())
+    
+    vec_len = max_degree - min_degree + 1
+    for i in range(len(dataset)):
+        num_nodes = dataset.graph_lists[i].num_nodes()
+        node_feat = torch.zeros((num_nodes, vec_len))
+        degrees = dataset.graph_lists[i].in_degrees()
+        node_feat[torch.arange(num_nodes), degrees - min_degree] = 1.
+        dataset.graph_lists[i].ndata[feat_name] = node_feat
+    dataset.save()
+    return dataset
 
 def get_stats(array, conf_interval=False, name=None, stdout=False, logout=False):
     """Compute mean and standard deviation from an numerical array
@@ -79,6 +109,8 @@ def parse_args():
                         help="Batch size")
     parser.add_argument("--lr", type=float, default=1e-4, 
                         help="Learning rate")
+    parser.add_argument("--weight_decay", type=float, default=0.,
+                        help="Weight decay rate")
     parser.add_argument("--epochs", type=int, default=1000, 
                         help="Number of training epochs")
     parser.add_argument("--num_trials", type=int, default=1,
@@ -90,7 +122,9 @@ def parse_args():
                         help="Dataset used for training")
     parser.add_argument("--seed", type=int, default=-1, 
                         help="Random seed, -1 for unset")
-    parser.add_argument("--data_path", type=str, default="./datasets", 
+    parser.add_argument("--print_every", type=int, default=10,
+                        help="Print train log every ? epochs, -1 for silence training")
+    parser.add_argument("--dataset_path", type=str, default="./datasets", 
                         help="Path holding your dataset")
     parser.add_argument("--output_path", type=str, default="./output", 
                         help="Path holding your result files")
@@ -127,10 +161,24 @@ def parse_args():
             torch.backends.cudnn.deterministic = True
             torch.backends.cudnn.benchmark = False
     
+    # print every
+    if args.print_every < 0:
+        args.print_every = args.epochs + 1
+    
     # path
-    paths = [args.output_path, args.data_path]
+    paths = [args.output_path, args.dataset_path]
     for p in paths:
         if not os.path.exists(p):
             os.makedirs(p)
 
+    # datasets ad-hoc
+    if args.dataset in ['COLLAB', 'IMDBBINARY', 'IMDBMULTI', 'ENZYMES']:
+        args.degree_as_feature = True
+    else:
+        args.degree_as_feature = False
+
     return args
+
+# if __name__ == "__main__":
+#     args = parse_args()
+#     print(args.degree_as_feature)
