@@ -82,3 +82,4 @@ python main.py \
       --dropout $dropout \
       --cross_weight $cross_weight\
       --fuse_weight $fuse_weight\
+      --num_trials $num_trials\
