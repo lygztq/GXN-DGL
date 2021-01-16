@@ -9,11 +9,6 @@ from dgl.nn.pytorch.glob import SortPooling
 import dgl
 from dgl.nn import GraphConv
 
-ParamList = lambda T : Union[List[T], Tuple[T]]
-VarParamList = lambda T : Union[ParamList(T), T]
-FloatVarParamList = VarParamList(float)
-FloatParamList = ParamList(float)
-IntParamList = ParamList(int)
 
 class GraphCrossModule(torch.nn.Module):
     def __init__(self, pool_ratios:Union[float, List[float]], in_dim:int,
@@ -142,7 +137,7 @@ class GraphCrossModule(torch.nn.Module):
 
 
 class GraphCrossNet(torch.nn.Module):
-    def __init__(self, in_dim:int, out_dim:int, edge_feat_dim:int,
+    def __init__(self, in_dim:int, out_dim:int, edge_feat_dim:int=0,
                  hidden_dim:int=96, pool_ratios:List[float]=[0.9, 0.7],
                  readout_nodes:int=30, conv1d_dims:List[int]=[16, 32],
                  conv1d_kws:List[int]=[5],
@@ -156,9 +151,10 @@ class GraphCrossNet(torch.nn.Module):
         conv1d_kws = [hidden_dim] + conv1d_kws
 
         if edge_feat_dim > 0:
+            self.in_dim += hidden_dim
             self.e2l_lin = torch.nn.Linear(edge_feat_dim, hidden_dim)
 
-        self.gxn = GraphCrossModule(pool_ratios, in_dim=in_dim, out_dim=hidden_dim,
+        self.gxn = GraphCrossModule(pool_ratios, in_dim=self.in_dim, out_dim=hidden_dim,
                                     hidden_dim=hidden_dim//2, cross_weight=cross_weight,
                                     fuse_weight=fuse_weight, dist=dist)
         self.sortpool = SortPooling(readout_nodes)
@@ -207,3 +203,24 @@ class GraphCrossNet(torch.nn.Module):
 class GraphClassifier(torch.nn.Module):
     def __init__(self, args):
         super(GraphClassifier, self).__init__()
+        self.gxn = GraphCrossNet(in_dim=args.in_dim, 
+                                 out_dim=args.embed_dim,
+                                 edge_feat_dim=args.edge_feat_dim,
+                                 hidden_dim=args.hidden_dim,
+                                 pool_ratios=args.pool_ratios,
+                                 readout_nodes=args.readout_nodes,
+                                 conv1d_dims=args.conv1d_dims,
+                                 conv1d_kws=args.conv1d_kws,
+                                 cross_weight=args.cross_weight,
+                                 fuse_weight=args.fuse_weight)
+        self.lin1 = torch.nn.Linear(args.embed_dim, args.hidden_dim)
+        self.lin2 = torch.nn.Linear(args.hidden_dim, args.out_dim)
+        self.dropout = args.dropout
+
+    def forward(self, graph:DGLGraph, node_feat:Tensor, edge_feat:Optional[Tensor]=None):
+        embed, logits1, logits2 = self.gxn(graph, node_feat, edge_feat)
+        logits = F.relu(self.lin1(embed))
+        if self.dropout > 0:
+            logits = F.dropout(logits, p=self.dropout, training=self.training)
+        logits = self.lin2(logits)
+        return F.log_softmax(logits, dim=1), logits1, logits2
