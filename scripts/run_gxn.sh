@@ -4,7 +4,7 @@
 DATA="${1-DD}"  # ENZYMES, DD, PROTEINS, COLLAB, IMDBBINARY, IMDBMULTI
 device=${2-0}
 num_trials=${3-10}
-print_every=${4-2}
+print_every=${4-10}
 
 
 # general settings
@@ -85,3 +85,4 @@ python main.py \
       --fuse_weight $fuse_weight\
       --weight_decay $weight_decay\
       --num_trials $num_trials\
+      --print_every $print_every\
