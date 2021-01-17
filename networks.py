@@ -155,6 +155,8 @@ class GraphCrossNet(torch.nn.Module):
         if edge_feat_dim > 0:
             self.in_dim += hidden_dim
             self.e2l_lin = torch.nn.Linear(edge_feat_dim, hidden_dim)
+        else:
+            self.e2l_lin = None
 
         self.gxn = GraphCrossModule(pool_ratios, in_dim=self.in_dim, out_dim=hidden_dim,
                                     hidden_dim=hidden_dim//2, cross_weight=cross_weight,
@@ -174,25 +176,15 @@ class GraphCrossNet(torch.nn.Module):
         if self.out_dim > 0:
             self.out_lin = torch.nn.Linear(self.final_dense_dim, out_dim)
 
-        self.reset_parameters()
+        self.init_weights()
     
-    def _init_params(self, p):
-        if isinstance(p, torch.nn.parameter.Parameter):
-            torch.nn.init.xavier_uniform_(p)
-        elif isinstance(p, torch.nn.Linear):
-            torch.nn.init.zeros_(p.bias)
-            torch.nn.init.xavier_uniform_(p.weight)
-
-    def reset_parameters(self):
-        for p in self.modules():
-            if isinstance(p, torch.nn.ParameterList):
-                for pp in p:
-                    self._init_params(pp)
-            else:
-                self._init_params(p)
-        for name, p in self.named_parameters():
-            if not '.' in name:
-                self._init_params(p)
+    def init_weights(self):
+        if self.e2l_lin is not None:
+            torch.nn.init.xavier_normal_(self.e2l_lin.weight)
+        torch.nn.init.xavier_normal_(self.final_conv1.weight)
+        torch.nn.init.xavier_normal_(self.final_conv2.weight)
+        if self.out_dim > 0:
+            torch.nn.init.xavier_normal_(self.out_lin.weight)
 
     def forward(self, graph:DGLGraph, node_feat:Tensor, edge_feat:Optional[Tensor]=None):
         num_batch = graph.batch_size
