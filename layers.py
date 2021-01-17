@@ -3,9 +3,24 @@ from typing import Optional
 import dgl
 import torch
 import torch.nn
+import torch.nn.functional as F
 from dgl import DGLGraph
 from dgl.nn import GraphConv
 from torch import Tensor
+
+
+class GraphConvWithDropout(GraphConv):
+    def __init__(self, in_feats, out_feats, dropout=0.3, norm='both', weight=True, 
+                 bias=True, activation=None, allow_zero_in_degree=False):
+        super(GraphConvWithDropout, self).__init__(in_feats, out_feats,
+                                                   norm, weight, bias,
+                                                   activation,
+                                                   allow_zero_in_degree)
+        self.dropout = torch.nn.Dropout(p=dropout)
+
+    def call(self, graph, feat, weight=None):
+        feat = self.dropout(feat)
+        return super(GraphConvWithDropout, self).call(graph, feat, weight)
 
 
 class Discriminator(torch.nn.Module):
@@ -103,7 +118,7 @@ class IndexSelect(torch.nn.Module):
         self.dist = dist
         self.dense = DenseLayer(hidden_dim, hidden_dim, act)
         self.discriminator = Discriminator(hidden_dim)
-        self.gcn = GraphConv(hidden_dim, hidden_dim)
+        self.gcn = GraphConvWithDropout(hidden_dim, hidden_dim)
 
     def forward(self, graph:DGLGraph, h_pos:Tensor,
                 h_neg:Tensor, bias_pos:Optional[Tensor]=None,
@@ -149,7 +164,7 @@ class GraphPool(torch.nn.Module):
     def __init__(self, hidden_dim:int, use_gcn=False):
         super(GraphPool, self).__init__()
         self.use_gcn = use_gcn
-        self.down_sample_gcn = GraphConv(hidden_dim, hidden_dim) \
+        self.down_sample_gcn = GraphConvWithDropout(hidden_dim, hidden_dim) \
                                if use_gcn else None
         
     def forward(self, graph:DGLGraph, feat:Tensor,
@@ -208,7 +223,7 @@ class GraphUnpool(torch.nn.Module):
     """
     def __init__(self, hidden_dim:int):
         super(GraphUnpool, self).__init__()
-        self.up_sample_gcn = GraphConv(hidden_dim, hidden_dim)
+        self.up_sample_gcn = GraphConvWithDropout(hidden_dim, hidden_dim)
     
     def forward(self, graph:DGLGraph,
                 feat:Tensor, select_idx:Tensor):

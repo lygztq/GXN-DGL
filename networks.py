@@ -6,8 +6,6 @@ import torch.nn
 import torch.nn.functional as F
 import dgl.function as fn
 from dgl.nn.pytorch.glob import SortPooling
-import dgl
-from dgl.nn import GraphConv
 
 
 class GraphCrossModule(torch.nn.Module):
@@ -22,9 +20,9 @@ class GraphCrossModule(torch.nn.Module):
         self.num_cross_layers = num_cross_layers
 
         # build network
-        self.start_gcn_scale1 = GraphConv(in_dim, hidden_dim)
-        self.start_gcn_scale2 = GraphConv(hidden_dim, hidden_dim)
-        self.end_gcn = GraphConv(2 * hidden_dim, out_dim)
+        self.start_gcn_scale1 = GraphConvWithDropout(in_dim, hidden_dim)
+        self.start_gcn_scale2 = GraphConvWithDropout(hidden_dim, hidden_dim)
+        self.end_gcn = GraphConvWithDropout(2 * hidden_dim, out_dim)
 
         self.index_select_scale1 = IndexSelect(pool_ratios[0], hidden_dim, act="prelu", dist=dist)
         self.index_select_scale2 = IndexSelect(pool_ratios[1], hidden_dim, act="prelu", dist=dist)
@@ -33,17 +31,17 @@ class GraphCrossModule(torch.nn.Module):
         self.end_unpool_s21 = GraphUnpool(hidden_dim)
         self.end_unpool_s32 = GraphUnpool(hidden_dim)
 
-        self.s1_l1_gcn = GraphConv(hidden_dim, hidden_dim)
-        self.s1_l2_gcn = GraphConv(hidden_dim, hidden_dim)
-        self.s1_l3_gcn = GraphConv(hidden_dim, hidden_dim)
+        self.s1_l1_gcn = GraphConvWithDropout(hidden_dim, hidden_dim)
+        self.s1_l2_gcn = GraphConvWithDropout(hidden_dim, hidden_dim)
+        self.s1_l3_gcn = GraphConvWithDropout(hidden_dim, hidden_dim)
 
-        self.s2_l1_gcn = GraphConv(hidden_dim, hidden_dim)
-        self.s2_l2_gcn = GraphConv(hidden_dim, hidden_dim)
-        self.s2_l3_gcn = GraphConv(hidden_dim, hidden_dim)
+        self.s2_l1_gcn = GraphConvWithDropout(hidden_dim, hidden_dim)
+        self.s2_l2_gcn = GraphConvWithDropout(hidden_dim, hidden_dim)
+        self.s2_l3_gcn = GraphConvWithDropout(hidden_dim, hidden_dim)
 
-        self.s3_l1_gcn = GraphConv(hidden_dim, hidden_dim)
-        self.s3_l2_gcn = GraphConv(hidden_dim, hidden_dim)
-        self.s3_l3_gcn = GraphConv(hidden_dim, hidden_dim)
+        self.s3_l1_gcn = GraphConvWithDropout(hidden_dim, hidden_dim)
+        self.s3_l2_gcn = GraphConvWithDropout(hidden_dim, hidden_dim)
+        self.s3_l3_gcn = GraphConvWithDropout(hidden_dim, hidden_dim)
 
         if num_cross_layers >= 1:
             self.pool_s12_1 = GraphPool(hidden_dim, use_gcn=True)
