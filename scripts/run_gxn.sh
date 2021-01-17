@@ -24,42 +24,42 @@ case ${DATA} in
 IMDBBINARY)
   num_epochs=200
   learning_rate=0.001
-  sortpooling_k=16
+  sortpooling_k=31
   k1=0.8
   k2=0.5
   ;;
 IMDBMULTI)
   num_epochs=200
   learning_rate=0.001
-  sortpooling_k=12
+  sortpooling_k=22
   k1=0.8
   k2=0.7
   ;;
 COLLAB)
   num_epochs=100
   learning_rate=0.001
-  sortpooling_k=64
+  sortpooling_k=130
   k1=0.9
   k2=0.5
   ;;
 DD)
   num_epochs=100
   learning_rate=0.0005
-  sortpooling_k=150
+  sortpooling_k=291
   k1=0.8
   k2=0.6
   ;;
 PROTEINS)
   num_epochs=100
   learning_rate=0.001
-  sortpooling_k=24
+  sortpooling_k=32
   k1=0.8
   k2=0.7
   ;;
 ENZYMES)
   num_epochs=500
   learning_rate=0.0001
-  sortpooling_k=25
+  sortpooling_k=42
   k1=0.7
   k2=0.5
   ;;
