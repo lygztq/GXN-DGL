@@ -3,7 +3,6 @@ from typing import Optional
 import dgl
 import torch
 import torch.nn
-import torch.nn.functional as F
 from dgl import DGLGraph
 from dgl.nn import GraphConv
 from torch import Tensor
