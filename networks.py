@@ -174,6 +174,26 @@ class GraphCrossNet(torch.nn.Module):
         if self.out_dim > 0:
             self.out_lin = torch.nn.Linear(self.final_dense_dim, out_dim)
 
+        self.reset_parameters()
+    
+    def _init_params(self, p):
+        if isinstance(p, torch.nn.parameter.Parameter):
+            torch.nn.init.xavier_uniform_(p)
+        elif isinstance(p, torch.nn.Linear):
+            torch.nn.init.zeros_(p.bias)
+            torch.nn.init.xavier_uniform_(p.weight)
+
+    def reset_parameters(self):
+        for p in self.modules():
+            if isinstance(p, torch.nn.ParameterList):
+                for pp in p:
+                    self._init_params(pp)
+            else:
+                self._init_params(p)
+        for name, p in self.named_parameters():
+            if not '.' in name:
+                self._init_params(p)
+
     def forward(self, graph:DGLGraph, node_feat:Tensor, edge_feat:Optional[Tensor]=None):
         num_batch = graph.batch_size
         if edge_feat is not None:
