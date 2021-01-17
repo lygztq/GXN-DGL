@@ -17,6 +17,7 @@ batch_size=64
 dropout=0.5
 cross_weight=1.0
 fuse_weight=0.9
+weight_decay=1e-3
 
 # dataset-specific settings
 case ${DATA} in
@@ -82,4 +83,5 @@ python main.py \
       --dropout $dropout \
       --cross_weight $cross_weight\
       --fuse_weight $fuse_weight\
+      --weight_decay $weight_decay\
       --num_trials $num_trials\
