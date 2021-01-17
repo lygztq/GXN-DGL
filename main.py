@@ -154,7 +154,8 @@ if __name__ == "__main__":
     out_dict = {"hyper-parameters": vars(args),
                 "result_date": str(datetime.now()),
                 "result": "{:.4f}(+-{:.4f})".format(mean, err_bd),
-                "train_time": "{:.4f}".format(sum(train_times) / len(train_times))}
+                "train_time": "{:.4f}".format(sum(train_times) / len(train_times)),
+                "details": res}
 
     with open(os.path.join(args.output_path, "{}.log".format(args.dataset)), "w") as f:
         json.dump(out_dict, f, sort_keys=True, indent=4)
