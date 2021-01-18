@@ -2,43 +2,12 @@ import argparse
 import logging
 import math
 import os
-import sys
 import random
 
 import numpy as np
 import torch
 import torch.cuda
 from scipy.stats import t
-import dgl
-
-
-def degree_as_feature(dataset):
-    """
-    Use node degree (in one-hot format) as node feature
-    """
-    # first check if already have such feature
-    feat_name = "degree"
-    g = dataset.graph_lists[0]
-    if feat_name in g.ndata:
-        return dataset
-
-    logging.warning("Adding node degree into node features...")
-    min_degree = sys.maxsize
-    max_degree = 0
-    for i in range(len(dataset)):
-        degrees = dataset.graph_lists[i].in_degrees()
-        min_degree = min(min_degree, degrees.min().item())
-        max_degree = max(max_degree, degrees.max().item())
-    
-    vec_len = max_degree - min_degree + 1
-    for i in range(len(dataset)):
-        num_nodes = dataset.graph_lists[i].num_nodes()
-        node_feat = torch.zeros((num_nodes, vec_len))
-        degrees = dataset.graph_lists[i].in_degrees()
-        node_feat[torch.arange(num_nodes), degrees - min_degree] = 1.
-        dataset.graph_lists[i].ndata[feat_name] = node_feat
-    dataset.save()
-    return dataset
 
 
 def get_stats(array, conf_interval=False, name=None, stdout=False, logout=False):
