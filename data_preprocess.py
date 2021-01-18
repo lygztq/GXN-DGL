@@ -6,9 +6,18 @@ import numpy as np
 from dgl.data import LegacyTUDataset
 
 
-def node_label_as_feature(dataset:LegacyTUDataset):
+def node_label_as_feature(dataset:LegacyTUDataset, concat=True):
     """
+    Description
+    -----------
     Add node labels to graph node features dict
+
+    Parameters
+    ----------
+    dataset : LegacyTUDataset
+        The dataset object
+    concat : bool, optional
+        If True, concat node_labels directly into node feature.
     """
     # check if node label is not available
     if not os.path.exists(dataset._file_path("node_labels")):
@@ -30,7 +39,15 @@ def node_label_as_feature(dataset:LegacyTUDataset):
     
     # add to node feature dict
     for idx, g in zip(node_idx_list, dataset.graph_lists):
-        g.ndata["node_label"] = torch.tensor(one_hot_node_labels[idx, :])
+        node_labels_tensor = torch.tensor(one_hot_node_labels[idx, :])
+        if concat:
+            if "feat" in g.ndata:
+                g.ndata["feat"] = torch.cat(
+                    (g.ndata["feat"], node_labels_tensor), dim=1)
+            else:
+                g.ndata["feat"] = node_labels_tensor
+        else:
+            g.ndata["node_label"] = node_labels_tensor
     
     dataset.save()
     return dataset
