@@ -12,7 +12,8 @@ import torch.nn.functional as F
 
 from dataloader import GraphDataLoader
 from networks import GraphClassifier
-from utils import get_stats, parse_args, degree_as_feature
+from utils import get_stats, parse_args
+from data_preprocess import degree_as_feature, node_label_as_feature
 
 
 def compute_loss(cls_logits:Tensor, labels:Tensor,
@@ -40,7 +41,7 @@ def compute_loss(cls_logits:Tensor, labels:Tensor,
 def train(model:torch.nn.Module, optimizer, trainloader,
           device, curr_epoch, total_epochs, use_degree=False):
     model.train()
-    n_feat_name = "degree" if use_degree else "feat"
+    # n_feat_name = "degree" if use_degree else "feat"
 
     total_loss = 0.
     num_batches = len(trainloader)
@@ -51,7 +52,7 @@ def train(model:torch.nn.Module, optimizer, trainloader,
         batch_graphs = batch_graphs.to(device)
         batch_labels = batch_labels.to(device)
         out, l1, l2 = model(batch_graphs, 
-                            batch_graphs.ndata[n_feat_name])
+                            batch_graphs.ndata["feat"])
         loss = compute_loss(out, batch_labels, l1, l2,
                             curr_epoch, total_epochs, device)
         loss.backward()
@@ -65,7 +66,7 @@ def train(model:torch.nn.Module, optimizer, trainloader,
 @torch.no_grad()
 def test(model:torch.nn.Module, loader, device, use_degree=False):
     model.eval()
-    n_feat_name = "degree" if use_degree else "feat"
+    # n_feat_name = "degree" if use_degree else "feat"
 
     correct = 0.
     num_graphs = len(loader.dataset)
@@ -74,7 +75,7 @@ def test(model:torch.nn.Module, loader, device, use_degree=False):
         batch_graphs, batch_labels = batch
         batch_graphs = batch_graphs.to(device)
         batch_labels = batch_labels.to(device)
-        out, _, _ = model(batch_graphs, batch_graphs.ndata[n_feat_name])
+        out, _, _ = model(batch_graphs, batch_graphs.ndata["feat"])
         pred = out.argmax(dim=1)
         correct += pred.eq(batch_labels).sum().item()
 
@@ -93,6 +94,10 @@ def main(args):
     # use degree as node feature
     if args.degree_as_feature:
         dataset = degree_as_feature(dataset)
+        mode = "concat"
+    else:
+        mode = "replace"
+    dataset = node_label_as_feature(dataset, mode=mode)
 
     num_training = int(len(dataset) * 0.9)
     num_test = len(dataset) - num_training
@@ -105,8 +110,6 @@ def main(args):
     
     # Step 2: Create model =================================================================== #
     num_feature, num_classes, _ = dataset.statistics()
-    if args.degree_as_feature:
-        num_feature = dataset.graph_lists[0].ndata["degree"].size(1)
     args.in_dim = int(num_feature)
     args.out_dim = int(num_classes)
     args.edge_feat_dim = 0 # No edge feature in datasets that we use.

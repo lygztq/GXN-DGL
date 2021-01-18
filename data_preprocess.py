@@ -4,9 +4,22 @@ import logging
 import torch
 import numpy as np
 from dgl.data import LegacyTUDataset
+import json
 
 
-def node_label_as_feature(dataset:LegacyTUDataset, mode="concat"):
+def _load_check_mark(path:str):
+    if os.path.exists(path):
+        with open(path, 'r') as f:
+            return json.load(f)
+    else:
+        return {}
+
+def _save_check_mark(path:str, marks:dict):
+    with open(path, 'w') as f:
+        json.dump(marks, f)
+
+
+def node_label_as_feature(dataset:LegacyTUDataset, mode="concat", save=True):
     """
     Description
     -----------
@@ -28,6 +41,18 @@ def node_label_as_feature(dataset:LegacyTUDataset, mode="concat"):
     if not os.path.exists(dataset._file_path("node_labels")) or len(dataset) == 0:
         logging.warning("No Node Label Data")
         return dataset
+    
+    # check if has cached value
+    check_mark_name = "node_label_as_feature"
+    check_mark_path = os.path.join(
+        dataset.save_path, "info_{}_{}.json".format(dataset.name, dataset.hash))
+    check_mark = _load_check_mark(check_mark_path)
+    if check_mark_name in check_mark \
+        and check_mark[check_mark_name] \
+        and not dataset._force_reload:
+        logging.warning("Using cached value in node_label_as_feature")
+        return dataset
+    logging.warning("Adding node labels into node features..., mode={}".format(mode))
     
     # check if graph has "feat"
     if "feat" not in dataset[0][0].ndata:
@@ -59,18 +84,28 @@ def node_label_as_feature(dataset:LegacyTUDataset, mode="concat"):
         else: # replace
             g.ndata["feat"] = node_labels_tensor
     
-    dataset.save()
+    if save:
+        check_mark[check_mark_name] = True
+        _save_check_mark(check_mark_path, check_mark)
+        dataset.save()
     return dataset
 
 
-def degree_as_feature(dataset):
+def degree_as_feature(dataset, save=True):
     """
     Use node degree (in one-hot format) as node feature
     """
     # first check if already have such feature
-    feat_name = "degree"
-    g = dataset.graph_lists[0]
-    if feat_name in g.ndata:
+    check_mark_name = "degree_as_feat"
+    feat_name = "feat"
+    check_mark_path = os.path.join(
+        dataset.save_path, "info_{}_{}.json".format(dataset.name, dataset.hash))
+    check_mark = _load_check_mark(check_mark_path)
+
+    if check_mark_name in check_mark \
+        and check_mark[check_mark_name] \
+        and not dataset._force_reload:
+        logging.warning("Using cached value in 'degree_as_feature'")
         return dataset
 
     logging.warning("Adding node degree into node features...")
@@ -88,6 +123,9 @@ def degree_as_feature(dataset):
         degrees = dataset.graph_lists[i].in_degrees()
         node_feat[torch.arange(num_nodes), degrees - min_degree] = 1.
         dataset.graph_lists[i].ndata[feat_name] = node_feat
-    dataset.save()
-    return dataset
 
+    if save:
+        check_mark[check_mark_name] = True
+        dataset.save()
+        _save_check_mark(check_mark_path, check_mark)
+    return dataset
