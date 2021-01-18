@@ -6,7 +6,7 @@ import numpy as np
 from dgl.data import LegacyTUDataset
 
 
-def node_label_as_feature(dataset:LegacyTUDataset, concat=True):
+def node_label_as_feature(dataset:LegacyTUDataset, mode="concat"):
     """
     Description
     -----------
@@ -16,13 +16,24 @@ def node_label_as_feature(dataset:LegacyTUDataset, concat=True):
     ----------
     dataset : LegacyTUDataset
         The dataset object
-    concat : bool, optional
-        If True, concat node_labels directly into node feature.
+    concat : str, optional
+        How to add node label to the graph. Valid options are "add",
+        "replace" and "concat".
+        - "add": Directly add node_label to graph node feature dict.
+        - "concat": Concatenate "feat" and "node_label"
+        - "replace": Use "node_label" as "feat"
+        Default: :obj:`"concat"`
     """
     # check if node label is not available
-    if not os.path.exists(dataset._file_path("node_labels")):
+    if not os.path.exists(dataset._file_path("node_labels")) or len(dataset) == 0:
         logging.warning("No Node Label Data")
         return dataset
+    
+    # check if graph has "feat"
+    if "feat" not in dataset[0][0].ndata:
+        logging.warning("Dataset has no node feature 'feat'")
+        if mode.lower() == "concat":
+            mode = "replace"
     
     # first read node labels
     DS_node_labels = dataset._idx_from_zero(
@@ -40,14 +51,13 @@ def node_label_as_feature(dataset:LegacyTUDataset, concat=True):
     # add to node feature dict
     for idx, g in zip(node_idx_list, dataset.graph_lists):
         node_labels_tensor = torch.tensor(one_hot_node_labels[idx, :])
-        if concat:
-            if "feat" in g.ndata:
-                g.ndata["feat"] = torch.cat(
-                    (g.ndata["feat"], node_labels_tensor), dim=1)
-            else:
-                g.ndata["feat"] = node_labels_tensor
-        else:
+        if mode.lower() == "concat":
+            g.ndata["feat"] = torch.cat(
+                (g.ndata["feat"], node_labels_tensor), dim=1)
+        elif mode.lower() == "add":
             g.ndata["node_label"] = node_labels_tensor
+        else: # replace
+            g.ndata["feat"] = node_labels_tensor
     
     dataset.save()
     return dataset
