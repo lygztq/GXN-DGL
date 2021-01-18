@@ -114,7 +114,7 @@ def main(args):
     model = GraphClassifier(args).to(device)
 
     # Step 3: Create training components ===================================================== #
-    optimizer = torch.optim.Adam(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
+    optimizer = torch.optim.Adam(model.parameters(), lr=args.lr, amsgrad=True, weight_decay=args.weight_decay)
 
     # Step 4: training epoches =============================================================== #
     best_test_acc = 0.0
