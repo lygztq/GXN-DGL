@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # input arguments
-DATA="${1-DD}"  # ENZYMES, DD, PROTEINS, COLLAB, IMDBBINARY, IMDBMULTI
+DATA="${1-DD}"  # ENZYMES, DD, PROTEINS, COLLAB, IMDB-BINARY, IMDB-MULTI
 device=${2-0}
 num_trials=${3-10}
 print_every=${4-10}
@@ -21,14 +21,14 @@ weight_decay=1e-3
 
 # dataset-specific settings
 case ${DATA} in
-IMDBBINARY)
+IMDB-BINARY)
   num_epochs=200
   learning_rate=0.001
   sortpooling_k=31
   k1=0.8
   k2=0.5
   ;;
-IMDBMULTI)
+IMDB-MULTI)
   num_epochs=200
   learning_rate=0.001
   sortpooling_k=22

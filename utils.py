@@ -203,7 +203,7 @@ def parse_args():
             os.makedirs(p)
 
     # datasets ad-hoc
-    if args.dataset in ['COLLAB', 'IMDBBINARY', 'IMDBMULTI', 'ENZYMES']:
+    if args.dataset in ['COLLAB', 'IMDB-BINARY', 'IMDB-MULTI', 'ENZYMES']:
         args.degree_as_feature = True
     else:
         args.degree_as_feature = False
