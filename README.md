@@ -83,7 +83,7 @@ Performance
 
 **Accuracy**
 
-**NOTE**: Different from our implementation, the author uses fixed dataset split and performs model-selection on testset. Thus there may be difference between our result and the author's result. The result of `Author's Code` in the table below are obtained using first-ford data as the test dataset.
+**NOTE**: Different from our implementation, the author uses fixed dataset split. Thus there may be difference between our result and the author's result. **To compare our implementation with the author's, we follow the setting in the author's implementation that performs model-selection on testset**. The result of `Author's Code` in the table below are obtained using first-ford data as the test dataset.
 
 |                   | DD           | PROTEINS    | ENZYMES     | IMDB-BINARY | IMDB-MULTI | COLLAB     |
 | ------------------| ------------ | ----------- | ----------- | ----------- | ---------- | ---------- |
