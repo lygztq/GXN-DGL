@@ -89,7 +89,7 @@ def main(args):
     for i in range(len(dataset)):
         dataset.graph_lists[i] = dgl.add_self_loop(dataset.graph_lists[i])
     
-    # use degree as node feature
+    # preprocess: use node degree/label as node feature
     if args.degree_as_feature:
         dataset = degree_as_feature(dataset)
         mode = "concat"
