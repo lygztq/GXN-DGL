@@ -9,6 +9,32 @@ from dgl.nn.pytorch.glob import SortPooling
 
 
 class GraphCrossModule(torch.nn.Module):
+    """
+    Description
+    -----------
+    The Graph Cross Module used by Graph Cross Networks.
+    This module only contains graph cross layers.
+
+    Parameters
+    ----------
+    pool_ratios : Union[float, List[float]]
+        The pooling ratios (for keeping nodes) for each layer.
+        For example, if `pool_ratio=0.8`, 80\% nodes will be preserved.
+        If a single float number is given, all pooling layers will have the
+        same pooling ratio.
+    in_dim : int
+        The number of input node feature channels.
+    out_dim : int
+        The number of output node feature channels.
+    hidden_dim : int
+        The number of hidden node feature channels.
+    cross_weight : float, optional
+        The weight parameter used in graph cross layers
+        Default: :obj:`1.0`
+    fuse_weight : float, optional
+        The weight parameter used at the end of GXN for channel fusion.
+        Default: :obj:`1.0`
+    """
     def __init__(self, pool_ratios:Union[float, List[float]], in_dim:int,
                  out_dim:int, hidden_dim:int, cross_weight:float=1.,
                  fuse_weight:float=1., dist:int=1, num_cross_layers:int=2):
@@ -137,8 +163,48 @@ class GraphCrossModule(torch.nn.Module):
 
 
 class GraphCrossNet(torch.nn.Module):
+    """
+    Description
+    -----------
+    The Graph Cross Network.
+
+    Parameters
+    ----------
+    in_dim : int
+        The number of input node feature channels.
+    out_dim : int
+        The number of output node feature channels.
+    edge_feat_dim : int, optional
+        The number of input edge feature channels. Edge feature
+        will be passed to a Linear layer and concatenated to
+        input node features. Default: :obj:`0`
+    hidden_dim : int, optional
+        The number of hidden node feature channels.
+        Default: :obj:`96`
+    pool_ratios : Union[float, List[float]], optional
+        The pooling ratios (for keeping nodes) for each layer.
+        For example, if `pool_ratio=0.8`, 80\% nodes will be preserved.
+        If a single float number is given, all pooling layers will have the
+        same pooling ratio.
+        Default: :obj:`[0.9, 0.7]`
+    readout_nodes : int, optional
+        Number of nodes perserved in the final sort pool operation.
+        Default: :obj:`30`
+    conv1d_dims : List[int], optional
+        The number of kernels of Conv1d operations.
+        Default: :obj:`[16, 32]`
+    conv1d_kws : List[int], optional
+        The kernel size of Conv1d.
+        Default: :obj:`[5]`
+    cross_weight : float, optional
+        The weight parameter used in graph cross layers
+        Default: :obj:`1.0`
+    fuse_weight : float, optional
+        The weight parameter used at the end of GXN for channel fusion.
+        Default: :obj:`1.0`
+    """
     def __init__(self, in_dim:int, out_dim:int, edge_feat_dim:int=0,
-                 hidden_dim:int=96, pool_ratios:List[float]=[0.9, 0.7],
+                 hidden_dim:int=96, pool_ratios:Union[List[float], float]=[0.9, 0.7],
                  readout_nodes:int=30, conv1d_dims:List[int]=[16, 32],
                  conv1d_kws:List[int]=[5],
                  cross_weight:float=1., fuse_weight:float=1., dist:int=1):
@@ -213,6 +279,12 @@ class GraphCrossNet(torch.nn.Module):
 
 
 class GraphClassifier(torch.nn.Module):
+    """
+    Description
+    -----------
+    Graph Classifier for graph classification.
+    GXN + MLP
+    """
     def __init__(self, args):
         super(GraphClassifier, self).__init__()
         self.gxn = GraphCrossNet(in_dim=args.in_dim, 

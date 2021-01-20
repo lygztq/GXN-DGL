@@ -36,6 +36,9 @@ def node_label_as_feature(dataset:LegacyTUDataset, mode="concat", save=True):
         - "concat": Concatenate "feat" and "node_label"
         - "replace": Use "node_label" as "feat"
         Default: :obj:`"concat"`
+    save : bool, optional
+        Save the result dataset.
+        Default: :obj:`True`
     """
     # check if node label is not available
     if not os.path.exists(dataset._file_path("node_labels")) or len(dataset) == 0:
@@ -91,9 +94,20 @@ def node_label_as_feature(dataset:LegacyTUDataset, mode="concat", save=True):
     return dataset
 
 
-def degree_as_feature(dataset, save=True):
+def degree_as_feature(dataset:LegacyTUDataset, save=True):
     """
+    Description
+    -----------
     Use node degree (in one-hot format) as node feature
+
+    Parameters
+    ----------
+    dataset : LegacyTUDataset
+        The dataset object
+
+    save : bool, optional
+        Save the result dataset.
+        Default: :obj:`True`
     """
     # first check if already have such feature
     check_mark_name = "degree_as_feat"

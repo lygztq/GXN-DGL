@@ -9,6 +9,9 @@ from torch import Tensor
 
 
 class GraphConvWithDropout(GraphConv):
+    """
+    A GraphConv followed by a Dropout.
+    """
     def __init__(self, in_feats, out_feats, dropout=0.3, norm='both', weight=True, 
                  bias=True, activation=None, allow_zero_in_degree=False):
         super(GraphConvWithDropout, self).__init__(in_feats, out_feats,
@@ -110,6 +113,24 @@ class DenseLayer(torch.nn.Module):
 
 
 class IndexSelect(torch.nn.Module):
+    """
+    Description
+    -----------
+    The index selection layer used by VIPool
+
+    Parameters
+    ----------
+    pool_ratio : float
+        The pooling ratio (for keeping nodes). For example, 
+        if `pool_ratio=0.8`, 80\% nodes will be preserved.
+    hidden_dim : int
+        The number of channels in node features.
+    act : str, optional
+        The activation function type.
+        Default: :obj:`'prelu'`
+    dist : int, optional
+        DO NOT USE THIS PARAMETER
+    """
     def __init__(self, pool_ratio:float, hidden_dim:int,
                  act:str="prelu", dist:int=1):
         super(IndexSelect, self).__init__()
@@ -122,6 +143,28 @@ class IndexSelect(torch.nn.Module):
     def forward(self, graph:DGLGraph, h_pos:Tensor,
                 h_neg:Tensor, bias_pos:Optional[Tensor]=None,
                 bias_neg:Optional[Tensor]=None):
+        """
+        Description
+        -----------
+        Perform index selection
+
+        Parameters
+        ----------
+        graph : dgl.DGLGraph
+            Input graph.
+        h_pos : torch.Tensor
+            The node features of positive samples
+            It has the same shape as :obj:`h_x`
+        h_neg : torch.Tensor
+            The node features of negative samples
+            It has the same shape as :obj:`h_x`
+        bias_pos : torch.Tensor
+            Bias parameter vector for positive scores
+            shape: :obj:`(num_nodes)`
+        bias_neg : torch.Tensor
+            Bias parameter vector for negative scores
+            shape: :obj:`(num_nodes)`
+        """
         # compute scores
         h_pos = self.dense(h_pos)
         h_neg = self.dense(h_neg)
@@ -172,7 +215,7 @@ class GraphPool(torch.nn.Module):
         """
         Description
         -----------
-        The unpooling module for graph
+        Perform graph pooling.
 
         Parameters
         ----------
@@ -208,6 +251,7 @@ class GraphPool(torch.nn.Module):
             return feat, graph
         else:
             return feat
+
 
 class GraphUnpool(torch.nn.Module):
     """
