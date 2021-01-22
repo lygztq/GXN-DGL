@@ -77,7 +77,7 @@ ENZYMES)
 esac
 
 
-python main.py \
+python main_early_stop.py \
       --dataset $DATA \
       --lr $learning_rate \
       --epochs $num_epochs \

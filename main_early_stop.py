@@ -107,20 +107,21 @@ def validate(model:torch.nn.Module, loader, device,
 
 def main(args):
     # Step 1: Prepare graph data and retrieve train/validation/test index ============================= #
-    dataset = TUDataset(args.dataset, raw_dir=args.dataset_path, force_reload=True)
+    dataset = LegacyTUDataset(args.dataset, raw_dir=args.dataset_path)
 
     # add self loop. We add self loop for each graph here since the function "add_self_loop" does not
     # support batch graph.
     for i in range(len(dataset)):
+        dataset.graph_lists[i] = dgl.remove_self_loop(dataset.graph_lists[i])
         dataset.graph_lists[i] = dgl.add_self_loop(dataset.graph_lists[i])
     
     # use degree as node feature
     if args.degree_as_feature:
-        dataset = degree_as_feature(dataset, save=False)
+        dataset = degree_as_feature(dataset)
         mode = "concat"
     else:
         mode = "replace"
-    dataset = node_label_as_feature(dataset, mode=mode, save=False)
+    dataset = node_label_as_feature(dataset, mode=mode)
 
     num_training = int(len(dataset) * 0.8)
     num_val = int(len(dataset) * 0.1)
