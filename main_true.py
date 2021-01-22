@@ -39,7 +39,7 @@ def compute_loss(cls_logits:Tensor, labels:Tensor,
 
 
 def train(model:torch.nn.Module, optimizer, trainloader,
-          device, curr_epoch, total_epochs, use_degree=False):
+          device, curr_epoch, total_epochs):
     model.train()
     # n_feat_name = "degree" if use_degree else "feat"
 
@@ -64,7 +64,7 @@ def train(model:torch.nn.Module, optimizer, trainloader,
 
 
 @torch.no_grad()
-def test(model:torch.nn.Module, loader, device, use_degree=False):
+def test(model:torch.nn.Module, loader, device):
     model.eval()
     # n_feat_name = "degree" if use_degree else "feat"
 
@@ -80,6 +80,29 @@ def test(model:torch.nn.Module, loader, device, use_degree=False):
         correct += pred.eq(batch_labels).sum().item()
 
     return correct / num_graphs
+
+@torch.no_grad()
+def validate(model:torch.nn.Module, loader, device,
+             curr_epoch, total_epochs):
+    model.eval()
+
+    tt_loss = 0.
+    correct = 0.
+    num_graphs = len(loader.dataset)
+    num_batchs = len(loader)
+
+    for batch in loader:
+        batch_graphs, batch_labels = batch
+        batch_graphs = batch_graphs.to(device)
+        batch_labels = batch_labels.to(device)
+        out, l1, l2 = model(batch_graphs, batch_graphs.ndata["feat"])
+        tt_loss += compute_loss(out, batch_labels, l1, l2,
+                                curr_epoch, total_epochs, device).item()
+        pred = out.argmax(dim=1)
+        correct += pred.eq(batch_labels).sum().item()
+
+    return correct / num_graphs, tt_loss / num_batchs
+
 
 
 def main(args):
@@ -99,11 +122,13 @@ def main(args):
         mode = "replace"
     dataset = node_label_as_feature(dataset, mode=mode, save=False)
 
-    num_training = int(len(dataset) * 0.9)
-    num_test = len(dataset) - num_training
-    train_set, test_set = random_split(dataset, [num_training, num_test])
+    num_training = int(len(dataset) * 0.8)
+    num_val = int(len(dataset) * 0.1)
+    num_test = len(dataset) - num_training - num_val
+    train_set, val_set, test_set = random_split(dataset, [num_training, num_val, num_test])
 
     train_loader = GraphDataLoader(train_set, batch_size=args.batch_size, shuffle=True, num_workers=1)
+    val_loader = GraphDataLoader(val_set, batch_size=args.batch_size, num_workers=1)
     test_loader = GraphDataLoader(test_set, batch_size=args.batch_size, num_workers=1)
 
     device = torch.device(args.device)
@@ -123,15 +148,27 @@ def main(args):
     best_test_acc = 0.0
     best_epoch = -1
     train_times = []
+
+    bad_count = 0
+    best_val_loss = 0.0
     for e in range(args.epochs):
         s_time = time()
         train_loss = train(model, optimizer, train_loader, device,
-                           e, args.epochs, args.degree_as_feature)
+                           e, args.epochs)
         train_times.append(time() - s_time)
-        test_acc = test(model, test_loader, device, args.degree_as_feature)
-        if test_acc > best_test_acc:
+        _, val_loss = validate(model, val_loader, device, e, args.epochs)
+        test_acc = test(model, test_loader, device)
+
+        if best_val_loss > val_loss:
+            best_val_loss = val_loss
+            best_epoch = e
+            bad_count = 0
             best_test_acc = test_acc
-            best_epoch = e + 1
+        else:
+            bad_count += 1
+        
+        if bad_count > args.patience:
+            break
 
         if (e + 1) % args.print_every == 0:
             log_format = "Epoch {}: loss={:.4f}, test_acc={:.4f}, best_test_acc={:.4f}"

@@ -142,6 +142,8 @@ def parse_args():
                         help="Weight decay rate")
     parser.add_argument("--epochs", type=int, default=1000, 
                         help="Number of training epochs")
+    parser.add_argument("--patience", type=int, default=20,
+                        help="Patience for early stopping")
     parser.add_argument("--num_trials", type=int, default=1,
                         help="Number of trials")
 
