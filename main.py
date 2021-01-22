@@ -94,11 +94,11 @@ def main(args):
     
     # use degree as node feature
     if args.degree_as_feature:
-        dataset = degree_as_feature(dataset, save=True)
+        dataset = degree_as_feature(dataset)
         mode = "concat"
     else:
         mode = "replace"
-    dataset = node_label_as_feature(dataset, mode=mode, save=True)
+    dataset = node_label_as_feature(dataset, mode=mode)
 
     num_training = int(len(dataset) * 0.9)
     num_test = len(dataset) - num_training
