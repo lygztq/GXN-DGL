@@ -41,7 +41,6 @@ def compute_loss(cls_logits:Tensor, labels:Tensor,
 def train(model:torch.nn.Module, optimizer, trainloader,
           device, curr_epoch, total_epochs, use_degree=False):
     model.train()
-    # n_feat_name = "degree" if use_degree else "feat"
 
     total_loss = 0.
     num_batches = len(trainloader)
@@ -66,7 +65,6 @@ def train(model:torch.nn.Module, optimizer, trainloader,
 @torch.no_grad()
 def test(model:torch.nn.Module, loader, device, use_degree=False):
     model.eval()
-    # n_feat_name = "degree" if use_degree else "feat"
 
     correct = 0.
     num_graphs = len(loader.dataset)
@@ -92,7 +90,7 @@ def main(args):
         dataset.graph_lists[i] = dgl.remove_self_loop(dataset.graph_lists[i])
         dataset.graph_lists[i] = dgl.add_self_loop(dataset.graph_lists[i])
     
-    # use degree as node feature
+    # preprocess: use node degree/label as node feature
     if args.degree_as_feature:
         dataset = degree_as_feature(dataset)
         mode = "concat"
