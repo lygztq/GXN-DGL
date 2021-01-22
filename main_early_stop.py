@@ -151,7 +151,7 @@ def main(args):
     train_times = []
 
     bad_count = 0
-    best_val_loss = 0.0
+    best_val_loss = float("inf")
     for e in range(args.epochs):
         s_time = time()
         train_loss = train(model, optimizer, train_loader, device,
