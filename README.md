@@ -60,15 +60,21 @@ COLLAB
 
 How to run example files
 --------------------------------
-In the GXN-DGL folder, run
+If you want to reproduce the author's result, in the GXN-DGL folder, run
 
 ```bash
 bash scripts/run_gxn.sh ${dataset_name} ${device_id} ${num_trials} ${print_trainlog_every}
 ```
 
+If you want to perform a early-stop version experiment, in the GXN-DGL folder, run
+
+```bash
+bash scripts/run_gxn_early_stop.sh ${dataset_name} ${device_id} ${num_trials} ${print_trainlog_every}
+```
+
 where
 - dataset_name: Dataset name used in this experiment. Could be DD', 'PROTEINS', 'ENZYMES', 'IMDB-BINARY', 'IMDB-MULTI' and 'COLLAB'.
-- device_id: ID of computation device. -1 for pure CPU computation.
+- device_id: ID of computation device. -1 for pure CPU computation. For example if you only have single GPU, set this value to be 0.
 - num_trials: How many times does the experiment conducted.
 - print_training_log_every: Print training log every ? epochs. -1 for silent training.
 
