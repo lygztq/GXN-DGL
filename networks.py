@@ -108,8 +108,6 @@ class GraphCrossModule(torch.nn.Module):
         feat_scale2 = F.relu(self.s2_l1_gcn(graph_scale2, feat_scale2))
         feat_scale3 = F.relu(self.s3_l1_gcn(graph_scale3, feat_scale3))
 
-        # res_s1_1, res_s2_1, res_s3_1 = feat_scale1, feat_scale2, feat_scale3
-
         if self.num_cross_layers >= 1:
             feat_s12_fu = self.pool_s12_1(graph_scale1, feat_scale1,
                                           select_idx_s1, non_select_idx_s1,
@@ -139,7 +137,6 @@ class GraphCrossModule(torch.nn.Module):
                                           scores_s2)
             feat_s32_fu = self.unpool_s32_2(graph_scale2, feat_scale3, select_idx_s2)
 
-            # TODO: why here is different: no res-connect and decay on cross_weight
             cross_weight = self.cross_weight * 0.05
             feat_scale1 = feat_scale1 + cross_weight * feat_s21_fu
             feat_scale2 = feat_scale2 + cross_weight * (feat_s12_fu + feat_s32_fu) / 2
@@ -156,8 +153,6 @@ class GraphCrossModule(torch.nn.Module):
         feat_agg = feat_scale1 + self.fuse_weight * feat_s2_out + self.fuse_weight * feat_down_s1
         feat_agg = torch.cat((feat_agg, feat_origin), dim=1)
         feat_agg = self.end_gcn(graph_scale1, feat_agg)
-        # del graph_scale2
-        # del graph_scale3
 
         return feat_agg, logit_s1, logit_s2
 

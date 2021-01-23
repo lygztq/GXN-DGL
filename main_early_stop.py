@@ -41,7 +41,6 @@ def compute_loss(cls_logits:Tensor, labels:Tensor,
 def train(model:torch.nn.Module, optimizer, trainloader,
           device, curr_epoch, total_epochs):
     model.train()
-    # n_feat_name = "degree" if use_degree else "feat"
 
     total_loss = 0.
     num_batches = len(trainloader)
@@ -66,7 +65,6 @@ def train(model:torch.nn.Module, optimizer, trainloader,
 @torch.no_grad()
 def test(model:torch.nn.Module, loader, device):
     model.eval()
-    # n_feat_name = "degree" if use_degree else "feat"
 
     correct = 0.
     num_graphs = len(loader.dataset)
