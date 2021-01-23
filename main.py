@@ -39,7 +39,7 @@ def compute_loss(cls_logits:Tensor, labels:Tensor,
 
 
 def train(model:torch.nn.Module, optimizer, trainloader,
-          device, curr_epoch, total_epochs, use_degree=False):
+          device, curr_epoch, total_epochs):
     model.train()
 
     total_loss = 0.
@@ -63,7 +63,7 @@ def train(model:torch.nn.Module, optimizer, trainloader,
 
 
 @torch.no_grad()
-def test(model:torch.nn.Module, loader, device, use_degree=False):
+def test(model:torch.nn.Module, loader, device):
     model.eval()
 
     correct = 0.
@@ -125,9 +125,9 @@ def main(args):
     for e in range(args.epochs):
         s_time = time()
         train_loss = train(model, optimizer, train_loader, device,
-                           e, args.epochs, args.degree_as_feature)
+                           e, args.epochs)
         train_times.append(time() - s_time)
-        test_acc = test(model, test_loader, device, args.degree_as_feature)
+        test_acc = test(model, test_loader, device)
         if test_acc > best_test_acc:
             best_test_acc = test_acc
             best_epoch = e + 1
