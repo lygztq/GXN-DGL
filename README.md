@@ -83,13 +83,14 @@ Performance
 
 **Accuracy**
 
-**NOTE**: Different from our implementation, the author uses fixed dataset split. Thus there may be difference between our result and the author's result. **To compare our implementation with the author's, we follow the setting in the author's implementation that performs model-selection on testset**. The result of `Author's Code` in the table below are obtained using first-ford data as the test dataset.
+**NOTE**: Different from our implementation, the author uses fixed dataset split. Thus there may be difference between our result and the author's result. **To compare our implementation with the author's, we follow the setting in the author's implementation that performs model-selection on testset**. We also try early-stop with patience equals to 1/5 of the total number of epochs for some datasets. The result of `Author's Code` in the table below are obtained using first-ford data as the test dataset.
 
 |                   | DD           | PROTEINS    | ENZYMES     | IMDB-BINARY | IMDB-MULTI | COLLAB     |
 | ------------------| ------------ | ----------- | ----------- | ----------- | ---------- | ---------- |
 | Reported in Paper | 82.68(4.1 )  | 79.91(4.1)  | 57.50(6.1)  | 78.60(2.3)  | 55.20(2.5) | 78.82(1.4) |
 | Author's Code     | 82.05        | 72.07       | 58.33       | 77.00       | 56.00      | 80.40      |
 | DGL               | 82.97(3.0)   | 78.21(2.0)  | 57.50(5.5)  | 78.70(4.0)  | 52.26(2.0) | 80.58(2.4) |
+| DGL(early-stop)   | 78.66(4.3)   | 73.12(3.1)  | 39.83(7.4)  | N/A         | N/A        | N/A        |
 
 
 **Speed**
